@@ -3,9 +3,10 @@ from collections import defaultdict
 from flask import Flask, request, jsonify, render_template
 import math
 import time
+import random
 from nltk.internals import Counter
 from nltk.tokenize import word_tokenize
-
+from collections import defaultdict, Counter
 from pydocumentdb import document_client
 
 app = Flask(__name__)
@@ -18,7 +19,7 @@ client = document_client.DocumentClient(ENDPOINT, {'masterKey': MASTERKEY})
 
 
 def get_cities_data():
-    sql = "SELECT c.city, c.lat, c.lng FROM c"
+    sql = "SELECT c.city, c.lat, c.lng, c.population FROM c"
     o = {"enableCrossPartitionQuery": True}
     r = list(client.QueryDocuments(f"dbs/{DATABASE_ID}/colls/{COLLECTION_ID1}", sql, o))
     c = []
@@ -26,14 +27,15 @@ def get_cities_data():
         c.append({
             "city": i['city'],
             "lat": i['lat'],
-            "lng": i['lng']
+            "lng": i['lng'],
+            "population": i["population"]
         })
     return c
 
 
 def get_reviews_data():
     # sql = "SELECT c.score, c.city FROM c"
-    sql = "SELECT TOP 1000 c.score, c.city FROM c"
+    sql = "SELECT TOP 100 c.score, c.city FROM c"
     o = {"enableCrossPartitionQuery": True}  # 如果集合是分区集合，需要启用跨分区查询
     # 执行查询
     q = list(client.QueryDocuments(f"dbs/{DATABASE_ID}/colls/{COLLECTION_ID2}", sql, o))
@@ -174,6 +176,40 @@ def extract_words(reviews):
     return words
 
 
+# 计算欧几里得距离
+def calculate_euclidean_distance(city1, city2):
+    lat1, lon1 = city1['lat'], city1['lng']
+    lat2, lon2 = city2['lat'], city2['lng']
+    return math.sqrt((float(lat1) - float(lat2)) ** 2 + (float(lon1) - float(lon2)) ** 2)
+
+
+# KNN算法实现
+def knn_clustering(classes, k, words):
+    # 初始化聚类
+    clusters = {i: [] for i in range(classes)}
+
+    cities_data = get_cities_data()
+
+    # 为每个城市分配一个初始类别
+    for city in cities_data:
+        assigned_class = random.randint(0, classes - 1)
+        clusters[assigned_class].append(city)
+
+    # 迭代分配城市到最近的类别
+    for city in cities_data:
+        distances = []
+        for class_id in clusters:
+            center = clusters[class_id][0]  # 假设每个类别的第一个城市是中心
+            distance = calculate_euclidean_distance(city, center)
+            distances.append((class_id, distance))
+        distances.sort(key=lambda x: x[1])
+        nearest_classes = [class_id for class_id, _ in distances[:k]]
+        most_common_class = Counter(nearest_classes).most_common(1)[0][0]
+        clusters[most_common_class].append(city)
+
+    return clusters
+
+
 @app.route('/stat/knn_reviews', methods=['GET'])
 def knn_reviews():
     start_time = time.time()
@@ -181,28 +217,22 @@ def knn_reviews():
     # 从请求中获取参数
     classes = int(request.args.get('classes', 6))
     k = int(request.args.get('k', 3))
-    words_count = int(request.args.get('words', 100))
+    words = int(request.args.get('words', 100))
 
-    # 从数据库获取评论数据
-    reviews_data = get_reviews_data()
-    class_vectors = {}
-    for class_id in range(classes):
-        class_reviews = [review['review'] for review in reviews_data if review['class_id'] == class_id]
-        class_vectors[class_id] = extract_words(class_reviews)
-    elapsed_time = (time.time() - start_time) * 1000
-    class_words = defaultdict(list)
-    for class_id in range(classes):
-        class_reviews = [review['review'] for review in reviews_data if review['class_id'] == class_id]
-        all_words = extract_words(class_reviews)
-        word_freq = Counter(all_words)
-        most_common = word_freq.most_common(words_count)
-        class_words[class_id] = most_common
+    # 执行KNN聚类
+    clusters = knn_clustering(classes, k, words)
+
+    # 计算每个类的总人口
+    cluster_populations = {class_id: sum(int(city['population']) for city in cities) for class_id, cities in
+                           clusters.items()}
+
     # 计算响应时间
     elapsed_time = (time.time() - start_time) * 1000
-    # 构建并返回 JSON 响应
+
     response = {
-        "class_words": class_words,
-        "time_ms": elapsed_time
+        'clusters': [{'classId': class_id, 'population': population} for class_id, population in
+                     cluster_populations.items()],
+        'time_ms': elapsed_time
     }
 
     return jsonify(response)

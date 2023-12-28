@@ -85,6 +85,24 @@
         </div>
         <p id="reviewResponseTime"></p>
     </div>
+
+    <!-- KNN聚类结果展示表单 -->
+    <div class="form-container">
+        <h2>显示KNN聚类结果</h2>
+        <form id="knnClusterQueryForm">
+            <input type="number" id="knnClasses" placeholder="类别数" required>
+            <input type="number" id="knnK" placeholder="K值" required>
+            <input type="number" id="knnWords" placeholder="流行词数量" required>
+            <button type="submit">生成饼图</button>
+        </form>
+        <div class="chart-container">
+            <canvas id="knnClusterChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+
 </div>
 <script>
     let distancePage = 0;
@@ -216,6 +234,56 @@
                 }
             }
         });
+    }
+
+    document.getElementById('knnClusterQueryForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        queryKnnClusters();
+    });
+
+    function queryKnnClusters() {
+        const classes = document.getElementById('knnClasses').value;
+        const k = document.getElementById('knnK').value;
+        const words = document.getElementById('knnWords').value;
+
+        $.ajax({
+            url: `/stat/knn_reviews?classes=${classes}&k=${k}&words=${words}`,
+            type: 'GET',
+            success: function (data) {
+                // 假设返回的数据结构是 { clusters: [{ classId: 1, population: 1000 }, ...] }
+                updateKnnClusterChart(data.clusters);
+            },
+            error: function (error) {
+                console.error('Error:', error);
+            }
+        });
+    }
+
+    function updateKnnClusterChart(clusterData) {
+        const ctx = document.getElementById('knnClusterChart').getContext('2d');
+        if (window.knnClusterPieChart) {
+            window.knnClusterPieChart.destroy();
+        }
+        window.knnClusterPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: clusterData.map(cluster => `类别 ${cluster.classId}`),
+                datasets: [{
+                    data: clusterData.map(cluster => cluster.population),
+                    backgroundColor: clusterData.map(cluster => getRandomColor()),
+                    hoverOffset: 4
+                }]
+            }
+        });
+    }
+
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
     }
 
 </script>

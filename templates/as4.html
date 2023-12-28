@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>City Distance Query</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+{#        body {#}
+{#    font-family: Arial, sans-serif;#}
+{#    display: flex;#}
+{#    justify-content: center;#}
+{#    align-items: center;#}
+{#    height: 100vh;#}
+{#    margin: 0;#}
+{# }#}
+{##}
+{#.container {#}
+{#    text-align: center;#}
+{#    width: 95%; /* 调整整个容器的宽度 */#}
+{#    max-width: 1200px; /* 设置一个最大宽度 */#}
+{# }#}
+{##}
+{#.chart-container {#}
+{#    width: 100%;#}
+{#    height: 500px; /* 设置图表的高度 */#}
+{#    margin: 20px auto;#}
+{# }#}
+{##}
+{#.pagination {#}
+{#    margin-top: 20px;#}
+{# }#}
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>查询城市间距离</h1>
+    <form id="queryForm">
+        <input type="text" id="cityName" placeholder="城市名" required>
+        <input type="text" id="stateName" placeholder="州名" required>
+        <button type="submit">查询</button>
+    </form>
+    <div class="chart-container">
+        <canvas id="distanceChart"></canvas>
+    </div>
+    <div class="pagination">
+        <button id="prevPage">上一页</button>
+        <button id="nextPage">下一页</button>
+    </div>
+    <p id="responseTime"></p>
+</div>
+<script>
+    let currentPage = 0;
+    const pageSize = 50;
+
+    document.getElementById('queryForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        currentPage = 0; // Reset to first page on new search
+        queryCities();
+     });
+
+    document.getElementById('prevPage').addEventListener('click', function () {
+        if (currentPage > 0) {
+            currentPage--;
+            queryCities();
+        }
+     });
+
+    document.getElementById('nextPage').addEventListener('click', function () {
+        currentPage++;
+        queryCities();
+     });
+
+    function queryCities() {
+        const cityName = document.getElementById('cityName').value;
+        $.ajax({
+            url: `/stat/closest_cities?city=${cityName}&page=${currentPage}&page_size=${pageSize}`,
+            type: 'GET',
+            success: function (data) {
+                updateChart(data.closest_cities);
+                document.getElementById('responseTime').innerText = `响应时间：${data.time_ms} 毫秒`;
+            },
+            error: function (error) {
+                console.error('Error:', error);
+            }
+        });
+     }
+
+    function updateChart(citiesData) {
+        const ctx = document.getElementById('distanceChart').getContext('2d');
+        if (window.barChart) {
+            window.barChart.destroy();
+        }
+        window.barChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: citiesData.map(item => item[0]),
+                datasets: [{
+                    label: '距离',
+                    data: citiesData.map(item => item[1]),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+     }
+
+</script>
+</body>
+</html>

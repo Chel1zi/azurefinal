@@ -1,0 +1,22 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+}
+
+.chart-container {
+    width: 80%;
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+.pagination {
+    margin-top: 20px;
+}

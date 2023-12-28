@@ -1,0 +1,93 @@
+
+Name:Li Xiang And Li Zhicheng
+Last 4 digits ID:6394 and 6406
+
+CSE 6331 - NEUC, Cloud Computing                   
+
+
+In-class Hands-on Assignment 2, Fall 2023   (c) DL, UTA, 2023
+
+INFORMATIONAL
+
+
+  C&P means cut and paste only those relevant lines from your program(s) into this assignment.
+
+
+ 1.  I understand that I am on my honor during this assignment, I will not collaborate, use 
+     non-allowed sources, and I will not discuss or share this assignment with anyone for the next 
+     12 hours.
+     You MAY: use Google to search, use previous source code, 
+     YOU MAY NOT use:
+     Email, WeChat, QQ, Facebook, Hangouts, IM, chats, Skype or ANY other human connection.
+
+     This is a timed assignment (90 minutes). Late submissions will have points deducted for being late.
+     Very late submissions will not be graded.
+
+     When you are complete, with any part, please send the link, raise your hand, so we may visually inspect that part.
+     Please demo each part once, initially, if we have more time we will review again, if requested.
+     The majority of credit will be for applications deployed on the cloud.
+
+     The second part of the assignment, you should electronically submit, you will need to copy and paste 
+     only those lines of code to implement that part of the assignment, usually a few (two to eight) lines of code. 
+     Place it immediately after the question.
+
+     Submit this Assignment (renamed) with code cut and pasted, ONLY text. DO NOT submit zips, binaries, libraries,
+     or anything other than text.
+
+     When any parts(questions) are complete complete, submit this assignment, you may make multiple submissions.
+
+     If you have computer, or other, problems, please raise your hand immediately.
+
+     If you understand and agree, please initial here:
+     _________________
+     Li Xiang and Li Zhicheng
+     _________________
+
+ 2. Get files from this same folder.
+   
+ 3. Name your program/submission with your name and last digits of your ID.
+
+ 4. Using the cloud service provider, all functionality possible should be implemented on that provider.
+    (Of course, displaying web pages through a browser and the user interface is "local")
+    The cloud provider is MS Azure.
+
+ 5. Upload all data files (*jpg and *csv, not this assignment) to the cloud service.
+  
+Assignment Questions:
+
+Show and submit code, when each part is complete, send your links in TEAMS chat:
+
+ 10. Through a RESTful API on HTTP protocol in the form of [GET] /popular_words?city="<City Name>"&limit=<N>, take queries from users and return the most popular N words of a given city as a list in descending order. 
+     data files: amazon-reviews.csv, us-cities.csv. They are associated on the key "city".
+     "Popular": how many reviews contain a word. If a word appears in 10 reviews, the popularity of that word equals 10. 
+     path: /popular_words
+     method: GET
+     request parameter "<City Name>": when a city name is given, the query shall only count regarding that given city. If it equals null or is omitted, then the query shall count all cities.
+     request parameter "<N>": the maximum records in the response. If the number of words is less than the given number N, then return all the words.
+     format of response: a JSON list in decending order regarding the popularity value of each element. Each element shall be an object (dict). For example: [{"term": "happy", "popularity": 20}, {"term": "great", "popularity": 18}, {"term": "day", "popularity": 10}]
+
+ 11. Based on question 10, change the definition of popularity to population:
+    "Popular": If a word appears in the reviews comes from 3 different cities, the popularity of that word equals the sum of the population of those 3 cities.
+    path: /popular_words
+    method: GET
+    request parameters: same as question 10.
+    format of response: same as question 10, but sutstitute the value of "popularity" with the sum of population of the cities that the word appears.
+
+ 12. Through a RESTful API on HTTP protocol in the form of [POST] /substitute_words, take a request in JSON format to substitute a given word with a new word.
+     path: /substitute_words
+     method: POST
+     the request is in JSON format: { "word": "great", "substitue": "fantastic" }, there are two parameters in the request: word, substitue.
+     the response is also in JSON format: { "affected_reviews": 18 }, the property "affected_reviews" means how many reviews are updated.
+
+ 13. Integrate the above 3 APIs in a webpage at the path "/words". 
+     The webpage shall have appropriate inputs to operate those APIs and show the response in a human-readable style. 
+     It shall also have your name as it appears on your ID card as well as the last 5 digits of your student ID in large font at the top of every web page dispayed (for this assignment)
+     Please show a picture below your name and ID number if you have one.
+    
+ 14. Send the root link in TEAMS chat, with the application running and we will try it out. Only for parts 10, 11, 12, 13. 
+     The link shall NOT be a proxied address, it shall go directly to the application that you have built without any intermediate layers.
+
+ 15. When complete, return (send) this assignment immediately for a review. 
+
+ 16. You can shutdown your service after being reviewed, or, when this hands-on assignment is timeout because from that moment on the TA will stop reviewing.
+

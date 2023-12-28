@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>City and Review Analysis</title>
+    <style>
+        /* CSS 样式 */
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        .form-section, .results-section {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .form-item {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"], button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 0.9em;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>城市与评论分析</h1>
+
+        <!-- 最近城市查询 -->
+        <div class="form-section">
+            <h2>查找最近城市</h2>
+            <form id="cityForm">
+                <div class="form-item">
+                    <label for="city">输入城市名称:</label>
+                    <input type="text" id="city" name="city" required>
+                </div>
+                <div class="form-item">
+                    <label for="pageSize">页面大小:</label>
+                    <input type="number" id="pageSize" name="pageSize" value="50">
+                </div>
+                <div class="form-item">
+                    <label for="page">页码:</label>
+                    <input type="number" id="page" name="page" value="0">
+                </div>
+                <button type="submit">查询最近城市</button>
+            </form>
+        </div>
+
+        <div id="closestCitiesResults" class="results-section"></div>
+
+        <!-- KNN 评论分类 -->
+        <div class="form-section">
+            <h2>KNN 评论分类</h2>
+            <div class="form-item">
+                <label for="classes">分类数:</label>
+                <input type="number" id="classes" value="6">
+            </div>
+            <div class="form-item">
+                <label for="k">K 值:</label>
+                <input type="number" id="k" value="3">
+            </div>
+            <div class="form-item">
+                <label for="words">单词数量:</label>
+                <input type="number" id="words" value="100">
+            </div>
+            <button onclick="fetchKNNResults()">获取分类</button>
+        </div>
+
+        <div id="knnResults" class="results-section"></div>
+
+        <!-- 创作人信息 -->
+        <div class="footer">
+            <p>创作人: Li Xiang 和 Li Zhicheng</p>
+            <p>学号: 76394 和 76406</p>
+        </div>
+    </div>
+
+    <script>
+        // 最近城市查询处理
+        document.getElementById('cityForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const city = document.getElementById('city').value;
+            const pageSize = document.getElementById('pageSize').value;
+            const page = document.getElementById('page').value;
+
+            fetch(`/stat/closest_cities?city=${city}&page_size=${pageSize}&page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    const resultsDiv = document.getElementById('closestCitiesResults');
+                    resultsDiv.innerHTML = '<h2>Closest Cities Results</h2>';
+
+                    if (data.closest_cities) {
+                        data.closest_cities.forEach(cityInfo => {
+                            resultsDiv.innerHTML += `<p>${cityInfo[0]} - ${cityInfo[1].toFixed(2)} units</p>`;
+                        });
+                    } else {
+                        resultsDiv.innerHTML += `<p>No closest cities found.</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+
+        // KNN 评论分类处理
+        function fetchKNNResults() {
+            const classes = document.getElementById('classes').value;
+            const k = document.getElementById('k').value;
+            const words = document.getElementById('words').value;
+
+            fetch(`/stat/knn_reviews?classes=${classes}&k=${k}&words=${words}`)
+                .then(response => response.json())
+                .then(data => {
+                    const resultsDiv = document.getElementById('knnResults');
+                    resultsDiv.innerHTML = '<h2>KNN Classification Results</h2>';
+
+                    if (data.class_words) {
+                        for (const classId in data.class_words) {
+                            resultsDiv.innerHTML += `<h3>Class ${classId}</h3>`;
+                            data.class_words[classId].forEach(wordPair => {
+                                resultsDiv.innerHTML += `<p>${wordPair[0]}: ${wordPair[1]}</p>`;
+                            });
+                        }
+                    } else {
+                        resultsDiv.innerHTML += `<p>No KNN classification results found.</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+</body>
+</html>
